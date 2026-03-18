@@ -1,36 +1,37 @@
-// app.js
 import { db } from "./firebase-config.js";
 import { doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// DOM要素（画面のパーツ）を取得
+// DOM要素の取得
 const myIdDisplay = document.getElementById("my-id-display");
 const myPointsDisplay = document.getElementById("my-points");
 const statusMessage = document.getElementById("status-message");
 const targetIdInput = document.getElementById("target-id-input");
 const matchBtn = document.getElementById("match-btn");
 
-let myUID = "";
-let opponentListener = null; // 相手の動きを監視するタイマーのようなもの
+const lobbyScreen = document.getElementById("lobby-screen");
+const gameScreen = document.getElementById("game-screen");
+const myHandContainer = document.getElementById("my-hand");
 
-// ★追加：9桁の数字を「000-000-000」の形にする関数
+let myUID = "";
+let opponentListener = null; 
+
+// --- 1. ロビー＆マッチング処理 ---
+
 const formatUID = (uid) => {
   if (!uid) return "";
   return `${uid.slice(0,3)}-${uid.slice(3,6)}-${uid.slice(6,9)}`;
 };
 
-// 9桁のランダムな数字を作る関数
 const generateUID = () => {
   return Math.floor(100000000 + Math.random() * 900000000).toString();
 };
 
-// 初期設定関数
 async function init() {
   myUID = localStorage.getItem("myUID");
 
   if (!myUID) {
     myUID = generateUID();
     localStorage.setItem("myUID", myUID); 
-    
     try {
       await setDoc(doc(db, "users", myUID), {
         points: 100,      
@@ -49,18 +50,14 @@ async function init() {
     }
   }
 
-  // ★変更：画面にはハイフン付きで表示する
   myIdDisplay.textContent = formatUID(myUID);
   if (myPointsDisplay.textContent === "---") myPointsDisplay.textContent = 100;
   statusMessage.textContent = "対戦相手のID入力を待っています...";
 }
 
-// ★追加：「対戦を申し込む」ボタンを押した時の処理
 matchBtn.addEventListener("click", async () => {
-  // 入力された文字からハイフンや空白を取り除き、数字(9桁)だけを抽出する
   const targetID = targetIdInput.value.replace(/[^0-9]/g, "");
 
-  // 入力チェック
   if (targetID.length !== 9) {
     alert("IDは9桁の数字で入力してください！");
     return;
@@ -70,35 +67,31 @@ matchBtn.addEventListener("click", async () => {
     return;
   }
 
-  // ボタンを連打できないようにする
   matchBtn.disabled = true;
   statusMessage.textContent = "相手の承認（入力）を待っています...";
 
   try {
-    // 自分のデータベースに「この人と戦いたい！」と書き込む
     await updateDoc(doc(db, "users", myUID), {
       targetID: targetID
     });
 
-    // ★重要：相手のデータベースを「リアルタイム監視」する
-    if (opponentListener) opponentListener(); // 前の監視があればリセット
+    if (opponentListener) opponentListener(); 
     
     opponentListener = onSnapshot(doc(db, "users", targetID), (docSnap) => {
       if (docSnap.exists()) {
         const opponentData = docSnap.data();
-        
-       // 相手も自分のIDを入力してくれたら（相思相愛）
         if (opponentData.targetID === myUID) {
           statusMessage.textContent = "🔥 マッチング成功！対戦準備中... 🔥";
           statusMessage.style.color = "#e74c3c";
+          opponentListener(); 
           
-          opponentListener(); // 監視を終了
-          
-          // ★ アラートを消して、以下に変更 ★
+          // マッチング成功から1秒後にゲーム画面へ切り替え
           setTimeout(() => {
-            startGame(targetID); // ゲーム画面へ移行！
+            startGame(targetID); 
           }, 1000);
         }
+      }
+    });
 
   } catch (error) {
     console.error(error);
@@ -107,23 +100,14 @@ matchBtn.addEventListener("click", async () => {
   }
 });
 
-// プログラムをスタート
-init();
-// app.js の最後に追加
-
-// --- 🔽 ここからゲーム本編の処理 🔽 ---
-
-const gameScreen = document.getElementById("game-screen");
-const lobbyScreen = document.querySelector(".container");
-const myHandContainer = document.getElementById("my-hand");
+// --- 2. ゲーム本編の処理 ---
 
 let myDeck = [];
 let myHand = [];
 let roomID = "";
 
-// 44枚のプールから30枚のデッキをランダムに作成する関数
+// デッキ(30枚)を作成する
 const generateDeck = () => {
-  // 仕様書通りの枚数制限
   const pool = [
     0, 
     ...Array(16).fill(1), 
@@ -136,49 +120,48 @@ const generateDeck = () => {
     ...Array(2).fill(8), 
     9
   ];
-  
-  // シャッフル（Fisher-Yatesアルゴリズム）
+  // シャッフル
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
-  
-  // 先頭の30枚をデッキとする
   return pool.slice(0, 30);
 };
 
-// 画面に手札を描画する関数
+// 手札を画面に表示する
 const renderHand = () => {
-  myHandContainer.innerHTML = ""; // 一度クリア
-  myHand.forEach((cardNumber, index) => {
+  myHandContainer.innerHTML = ""; 
+  myHand.forEach((cardNumber) => {
     const cardEl = document.createElement("div");
     cardEl.className = "hand-card";
     cardEl.textContent = cardNumber;
     
-    // カードをクリックした時の処理（仮）
+    // カードをクリックした時の動き
     cardEl.onclick = () => {
-      alert(`${cardNumber} のカードが選ばれました！(次はここに±3の判定などを入れます)`);
+      alert(`${cardNumber} のカードが選ばれました！`);
     };
     
     myHandContainer.appendChild(cardEl);
   });
 };
 
-// ゲーム開始処理
+// ゲーム開始！
 const startGame = (targetID) => {
-  // 1. ロビーを隠してゲーム画面を表示
+  // ロビーを消してゲーム画面を出す
   lobbyScreen.style.display = "none";
   gameScreen.style.display = "flex";
 
-  // 2. お互いに共通のルームIDを生成（小さいID_大きいID のルールにする）
+  // 共通のルームIDを作る
   const idArray = [myUID, targetID].sort();
   roomID = `${idArray[0]}_${idArray[1]}`;
-  console.log("入室したルーム:", roomID);
-
-  // 3. デッキを作成し、初期手札を5枚引く
+  
+  // デッキを作って5枚引く
   myDeck = generateDeck();
-  myHand = myDeck.splice(0, 5); // デッキから5枚取り出して手札へ
+  myHand = myDeck.splice(0, 5); 
 
-  // 4. 手札を画面に表示
+  // 手札を表示
   renderHand();
 };
+
+// プログラム開始
+init();
