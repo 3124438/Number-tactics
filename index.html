@@ -26,5 +26,22 @@
   </div>
 
   <script type="module" src="app.js"></script>
+  <div id="game-screen" class="game-container" style="display: none;">
+  <div class="player-area opponent-area">
+    <div class="status">相手のライフ: <span id="opponent-hp">3</span></div>
+    <div class="field-card" id="opponent-field">待機中...</div>
+  </div>
+
+  <div class="center-area">
+    <p id="game-message">VS</p>
+    </div>
+
+  <div class="player-area my-area">
+    <div class="field-card" id="my-field">カードを選んでください</div>
+    <div class="status">自分のライフ: <span id="my-hp">3</span></div>
+    
+    <div id="my-hand" class="hand-container"></div>
+  </div>
+</div>
 </body>
 </html>
