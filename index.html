@@ -3,33 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Number Jump - 対戦</title>
+  <title>Number Jump - 完全版</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <div id="lobby-screen" class="container">
     <h1>Number Jump</h1>
+
+    <div class="card ranking">
+      <h2>🏆 ランキング TOP 5</h2>
+      <ul id="ranking-list">読み込み中...</ul>
+    </div>
     
     <div class="card my-info">
-      <h2>あなたのID (9桁)</h2>
-      <p id="my-id-display" class="id-text">生成中...</p>
+      <h2>あなたのID: <span id="my-id-display" class="id-text">生成中...</span></h2>
       <p>所持ポイント: <span id="my-points">---</span> pt</p>
+      <p>次戦の賭けポイント: <span id="bet-points">---</span> pt (5%)</p>
+    </div>
+
+    <div class="card setup-info">
+      <h2>⚔️ 準備 (加護・デッキ)</h2>
+      <p style="font-size: 14px; color: #555;">加護を3つ選んでください</p>
+      <div id="blessing-container" class="checkbox-grid"></div>
+      <p style="font-size: 14px; color: #555; margin-top: 10px;">デッキは自動で30枚編成されます</p>
     </div>
 
     <div class="card match-info">
       <h2>対戦相手のIDを入力</h2>
       <input type="text" id="target-id-input" placeholder="例: 123-456-789" inputmode="numeric">
       <button id="match-btn">対戦を申し込む</button>
+      <p id="status-message"></p>
     </div>
-    
-    <p id="status-message">データベースに接続中...</p>
   </div>
 
   <div id="game-screen" class="game-container" style="display: none;">
     <div class="player-area opponent-area">
       <div class="status">相手のライフ: <span id="opponent-hp">3</span></div>
       <div class="field-card" id="opponent-field">待機中...</div>
+      <p id="opp-blessing-msg" style="font-size: 12px; color: #f1c40f;"></p>
     </div>
 
     <div class="center-area">
@@ -37,10 +49,22 @@
     </div>
 
     <div class="player-area my-area">
-      <div class="field-card" id="my-field">カードを選んでください</div>
+      <div class="field-card" id="my-field">カードを選ぶ</div>
       <div class="status">自分のライフ: <span id="my-hp">3</span></div>
+      
+      <div id="active-blessings" class="blessing-buttons"></div>
+      
+      <button id="union-btn" class="action-btn">合体(2枚出し): 残2回</button>
+      <p id="rule-msg" style="font-size: 12px; margin: 5px 0;">±3ルール適用中 (前回: <span id="last-card">なし</span>)</p>
+
       <div id="my-hand" class="hand-container"></div>
     </div>
+  </div>
+
+  <div id="result-screen" class="container" style="display: none; padding-top: 50px;">
+    <h1 id="result-title" style="font-size: 40px;"></h1>
+    <p id="result-point-info" style="font-size: 20px;"></p>
+    <button id="back-lobby-btn" style="margin-top: 30px;">ロビーに戻る</button>
   </div>
 
   <script type="module" src="app.js"></script>
