@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Number Jump - 完全版V4</title>
+  <title>Number Jump - 完全版V5</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -36,7 +36,10 @@
       <p class="section-subtitle">① 加護の選択 (3つまで)</p>
       <div id="blessing-container" class="blessing-list-vertical"></div>
       
-      <p class="section-subtitle" style="margin-top: 15px;">② デッキ編成 (合計 <span id="deck-total" class="highlight-text">30</span>/30枚)</p>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 15px; border-bottom: 2px solid #ecf0f1; padding-bottom: 3px; margin-bottom: 5px;">
+        <p class="section-subtitle" style="margin: 0; border: none; padding: 0;">② デッキ編成 (<span id="deck-total" class="highlight-text">30</span>/30枚)</p>
+        <button id="reset-deck-btn" style="width: auto; padding: 4px 10px; font-size: 12px; background-color: #95a5a6; border-radius: 4px;">初期化</button>
+      </div>
       <div class="deck-editor" id="deck-grid"></div>
     </div>
 
@@ -100,6 +103,18 @@
       <p style="font-size: 16px; margin: 10px 0;">相手の数字: <span id="turn-opp-card" class="highlight-text" style="color: #ecf0f1;"></span></p>
       <p style="font-size: 16px; margin: 10px 0;">相手の加護: <span id="turn-opp-blessing" class="highlight-text" style="color: #f1c40f;"></span></p>
       <p style="font-size: 12px; margin-top: 25px; color: #bdc3c7; animation: blink 1.5s infinite;">画面をタップして次へ</p>
+    </div>
+  </div>
+
+  <div id="blessing-confirm-overlay" class="turn-result-overlay" style="display: none;">
+    <div class="turn-result-content" style="border-color: #f1c40f; box-shadow: 0 0 25px rgba(241, 196, 15, 0.4);">
+      <h3 id="confirm-blessing-name" style="color: #f1c40f; margin-top: 0; margin-bottom: 10px; font-size: 24px; text-shadow: none;"></h3>
+      <p id="confirm-blessing-desc" style="font-size: 14px; margin-bottom: 15px; color: #ecf0f1; line-height: 1.4;"></p>
+      <p style="font-size: 14px; margin-bottom: 25px; color: white;">残り使用回数: <span id="confirm-blessing-count" class="highlight-text"></span> 回</p>
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button id="cancel-blessing-btn" style="background-color: #7f8c8d; flex: 1; padding: 10px;">戻る</button>
+        <button id="use-blessing-btn" style="background-color: #f1c40f; color: black; flex: 1; padding: 10px;">使用する</button>
+      </div>
     </div>
   </div>
 
