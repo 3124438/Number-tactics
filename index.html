@@ -1,20 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-    <title>Number Jump - デプロイテスト</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Number Jump - 対戦ロビー</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>UID生成テスト</h1>
-    <div id="uid-display">生成中...</div>
+  <div class="container">
+    <h1>Number Jump</h1>
+    
+    <div class="card my-info">
+      <h2>あなたのID (9桁)</h2>
+      <p id="my-id-display" class="id-text">生成中...</p>
+      <p>所持ポイント: <span id="my-points">---</span> pt</p>
+    </div>
 
-    <script type="module">
-        // 1. Firebaseの初期設定（あなたのコンソールの値をここに貼る）
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            // ... 他の設定
-        };
-        
-        // 2. 9桁UIDを生成してFirestoreに保存する処理をここに書く
-    </script>
+    <div class="card match-info">
+      <h2>対戦相手のIDを入力</h2>
+      <input type="number" id="target-id-input" placeholder="例: 123456789">
+      <button id="match-btn">対戦を申し込む</button>
+    </div>
+    
+    <p id="status-message">データベースに接続中...</p>
+  </div>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>
