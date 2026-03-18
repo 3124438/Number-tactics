@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Number Jump - 対戦ロビー</title>
+  <title>Number Jump - 対戦</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <h1>Number tactics</h1>
+
+  <div id="lobby-screen" class="container">
+    <h1>Number Jump</h1>
     
     <div class="card my-info">
       <h2>あなたのID (9桁)</h2>
@@ -25,23 +26,23 @@
     <p id="status-message">データベースに接続中...</p>
   </div>
 
-  <script type="module" src="app.js"></script>
   <div id="game-screen" class="game-container" style="display: none;">
-  <div class="player-area opponent-area">
-    <div class="status">相手のライフ: <span id="opponent-hp">3</span></div>
-    <div class="field-card" id="opponent-field">待機中...</div>
-  </div>
-
-  <div class="center-area">
-    <p id="game-message">VS</p>
+    <div class="player-area opponent-area">
+      <div class="status">相手のライフ: <span id="opponent-hp">3</span></div>
+      <div class="field-card" id="opponent-field">待機中...</div>
     </div>
 
-  <div class="player-area my-area">
-    <div class="field-card" id="my-field">カードを選んでください</div>
-    <div class="status">自分のライフ: <span id="my-hp">3</span></div>
-    
-    <div id="my-hand" class="hand-container"></div>
+    <div class="center-area">
+      <p id="game-message">VS</p>
+    </div>
+
+    <div class="player-area my-area">
+      <div class="field-card" id="my-field">カードを選んでください</div>
+      <div class="status">自分のライフ: <span id="my-hp">3</span></div>
+      <div id="my-hand" class="hand-container"></div>
+    </div>
   </div>
-</div>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>
