@@ -58,3 +58,81 @@ button:hover {
   font-weight: bold;
   color: #7f8c8d;
 }
+/* style.css の一番下に追加 */
+
+.game-container {
+  max-width: 500px;
+  margin: 0 auto;
+  background-color: #2c3e50;
+  color: white;
+  border-radius: 10px;
+  padding: 20px;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.player-area {
+  background-color: rgba(255,255,255,0.1);
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.status {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.field-card {
+  width: 80px;
+  height: 110px;
+  background-color: #ecf0f1;
+  color: #2c3e50;
+  margin: 0 auto;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.center-area {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: #e74c3c;
+}
+
+.hand-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.hand-card {
+  width: 50px;
+  height: 70px;
+  background-color: white;
+  color: #333;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.1s;
+}
+
+.hand-card:hover {
+  transform: translateY(-5px);
+  border-color: #e74c3c;
+}
