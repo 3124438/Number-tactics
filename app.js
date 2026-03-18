@@ -11,7 +11,7 @@ const BLESSINGS = {
   5: { name: "不屈の魂(初期HP+2)", max: 1, desc: "試合開始時に 最大ライフ+2（計5）。" },
   6: { name: "審判の雷", max: 1, desc: "勝利時、相手へのダメージを 2 にする。" }, 
   7: { name: "復讐の誓い", max: 1, desc: "（相手L - 自分L）× 2 を自分の数字に加算。" },
-  8: { name: "聖なる盾", max: 1, desc: "敗北してもライフが減らない。" }, 
+  8: { name: "聖なる盾", max: 1, desc: "敗北時のダメージを無効化し、次ターンの自分の数字を+2する。" }, 
   9: { name: "重力の呪縛(-4)", max: 1, desc: "相手が出したカードの数字を -4 する。" }
 };
 
@@ -32,14 +32,11 @@ const ui = {
   resTitle: document.getElementById("result-title"), resPoint: document.getElementById("result-point-info"), backBtn: document.getElementById("back-lobby-btn"),
   turnResultOverlay: document.getElementById("turn-result-overlay"), turnResultMsg: document.getElementById("turn-result-msg"),
   turnOppCard: document.getElementById("turn-opp-card"), turnOppBlessing: document.getElementById("turn-opp-blessing"),
-  
-  // ★加護確認ポップアップ用
-  blessingConfirmOverlay: document.getElementById("blessing-confirm-overlay"),
-  confirmBlessingName: document.getElementById("confirm-blessing-name"),
-  confirmBlessingDesc: document.getElementById("confirm-blessing-desc"),
-  confirmBlessingCount: document.getElementById("confirm-blessing-count"),
-  useBlessingBtn: document.getElementById("use-blessing-btn"),
-  cancelBlessingBtn: document.getElementById("cancel-blessing-btn")
+  blessingConfirmOverlay: document.getElementById("blessing-confirm-overlay"), confirmBlessingName: document.getElementById("confirm-blessing-name"),
+  confirmBlessingDesc: document.getElementById("confirm-blessing-desc"), confirmBlessingCount: document.getElementById("confirm-blessing-count"),
+  useBlessingBtn: document.getElementById("use-blessing-btn"), cancelBlessingBtn: document.getElementById("cancel-blessing-btn"),
+  // ★盾のボーナス表示用
+  shieldBonusMsg: document.getElementById("shield-bonus-msg")
 };
 
 // --- グローバル状態 ---
@@ -49,7 +46,7 @@ let state = {
   myDeckConfig: {}, myInventory: {}, 
   isUnionMode: false, unionCount: 2, lastCardSum: null,
   turnCard1: null, turnCard2: null, turnBlessing: null, isProcessing: false,
-  pendingBlessingId: null // ポップアップで確認中の加護ID
+  pendingBlessingId: null 
 };
 let listeners = { opponent: null, room: null };
 
@@ -129,7 +126,6 @@ function renderDeckEditor() {
   }
 }
 
-// ★追加：デッキを初期値に戻すボタン
 ui.resetDeckBtn.addEventListener("click", () => {
   if (confirm("デッキを初期構成に戻しますか？")) {
     state.myDeckConfig = { ...DEFAULT_DECK };
@@ -202,7 +198,7 @@ ui.matchBtn.addEventListener("click", async () => {
 });
 
 // ----------------------------------
-// ★加護確認ポップアップのボタンイベント
+// 加護確認ポップアップ
 // ----------------------------------
 ui.cancelBlessingBtn.addEventListener("click", () => {
   ui.blessingConfirmOverlay.style.display = "none";
@@ -212,12 +208,10 @@ ui.cancelBlessingBtn.addEventListener("click", () => {
 ui.useBlessingBtn.addEventListener("click", () => {
   const id = state.pendingBlessingId;
   
-  // すでに選択中の場合は「解除」する
   if (state.turnBlessing === id) {
     state.turnBlessing = null;
     ui.activeBlessings.querySelectorAll("button").forEach(b=>b.classList.remove("selected"));
   } else {
-    // 選択する
     state.turnBlessing = id;
     ui.activeBlessings.querySelectorAll("button").forEach(b=>b.classList.remove("selected"));
     const btn = ui.activeBlessings.querySelector(`button[data-id="${id}"]`);
@@ -320,6 +314,7 @@ const startGame = async (targetID) => {
   ui.oppField.textContent = "考え中"; ui.oppField.style.background = "#ecf0f1"; ui.oppField.classList.remove("open");
   ui.unionBtn.textContent = `合体(残2)`; ui.unionBtn.classList.remove("active"); ui.unionBtn.disabled = false;
   document.getElementById("last-card").textContent = "なし"; document.getElementById("opp-blessing-msg").textContent = "";
+  ui.shieldBonusMsg.textContent = "";
 
   ui.activeBlessings.innerHTML = ""; state.blessingCounts = {};
   
@@ -328,26 +323,18 @@ const startGame = async (targetID) => {
     if(id === 5) return; 
     
     const btn = document.createElement("button"); btn.className = "blessing-btn-in-game"; btn.dataset.id = id;
-    
-    // ★加護ボタンを押した時のポップアップ処理
     btn.onclick = () => {
       if (state.isProcessing) return;
       
       const isSelected = (state.turnBlessing === id);
-      
-      // ポップアップの中身をセット
       ui.confirmBlessingName.textContent = BLESSINGS[id].name.split('(')[0];
       ui.confirmBlessingDesc.textContent = BLESSINGS[id].desc;
       ui.confirmBlessingCount.textContent = state.blessingCounts[id];
       
       if (isSelected) {
-        ui.useBlessingBtn.textContent = "使用を取り消す";
-        ui.useBlessingBtn.style.backgroundColor = "#e74c3c";
-        ui.useBlessingBtn.style.color = "white";
+        ui.useBlessingBtn.textContent = "使用を取り消す"; ui.useBlessingBtn.style.backgroundColor = "#e74c3c"; ui.useBlessingBtn.style.color = "white";
       } else {
-        ui.useBlessingBtn.textContent = "使用する";
-        ui.useBlessingBtn.style.backgroundColor = "#f1c40f";
-        ui.useBlessingBtn.style.color = "black";
+        ui.useBlessingBtn.textContent = "使用する"; ui.useBlessingBtn.style.backgroundColor = "#f1c40f"; ui.useBlessingBtn.style.color = "black";
       }
       
       state.pendingBlessingId = id;
@@ -367,9 +354,11 @@ const startGame = async (targetID) => {
 
   renderInventoryHand();
 
+  // ★Hostが盾のボーナス状態も初期化してDBを作る
   if(state.isHost) {
     await setDoc(doc(db, "rooms", state.roomID), {
       [`${state.uid}_hp`]: state.myHP, [`${targetID}_hp`]: 3,
+      [`${state.uid}_shieldBonus`]: 0, [`${targetID}_shieldBonus`]: 0,
       [`${state.uid}_ready`]: false, [`${targetID}_ready`]: false, turn: 1
     });
   }
@@ -381,6 +370,10 @@ const startGame = async (targetID) => {
     
     state.myHP = data[`${state.uid}_hp`]; state.oppHP = data[`${state.targetUID}_hp`];
     ui.myHP.textContent = state.myHP; ui.oppHP.textContent = state.oppHP;
+    
+    // ★盾のボーナスを画面に表示
+    const mySB = data[`${state.uid}_shieldBonus`] || 0;
+    ui.shieldBonusMsg.textContent = mySB > 0 ? `🛡️ 聖なる盾効果: 今回の数字に +${mySB}` : "";
     
     if(data[`${state.targetUID}_ready`] && !data[`${state.uid}_ready`]) {
       ui.oppField.textContent = "セット済"; ui.oppField.style.background = "#34495e"; ui.oppField.style.color = "white";
@@ -402,14 +395,20 @@ const resolveTurn演出 = (data) => {
   const myB = data[`${me}_blessing`]; const oppB = data[`${opp}_blessing`];
   const oppRawVal = data[`${opp}_card1`] + (data[`${opp}_card2`] || 0); 
 
-  let myVal = data[`${me}_card1`] + (data[`${me}_card2`] || 0);
-  let oppVal = oppRawVal;
+  // ★盾のボーナスを取得して基礎値に足す
+  const mySB = data[`${me}_shieldBonus`] || 0;
+  const oppSB = data[`${opp}_shieldBonus`] || 0;
 
+  let myVal = data[`${me}_card1`] + (data[`${me}_card2`] || 0) + mySB;
+  let oppVal = oppRawVal + oppSB;
+
+  // 1. 加護による数値補正
   if(myB === 9) oppVal = Math.max(0, oppVal - 4); if(oppB === 9) myVal = Math.max(0, myVal - 4);
   if(myB === 0) myVal += 4; if(oppB === 0) oppVal += 4;
   if(myB === 7) myVal += Math.max(0, (data[`${opp}_hp`] - data[`${me}_hp`]) * 2);
   if(oppB === 7) oppVal += Math.max(0, (data[`${me}_hp`] - data[`${opp}_hp`]) * 2);
 
+  // 2. 勝敗判定（0vs9の特殊処理）
   const isReverse = (myB === 1 || oppB === 1);
   let result = 0; 
   
@@ -427,14 +426,21 @@ const resolveTurn演出 = (data) => {
     }
   }
 
+  // 3. ダメージ処理
   let myDmg = (result === 2) ? 1 : 0; let oppDmg = (result === 1) ? 1 : 0;
+  let nextMyShieldBonus = 0; let nextOppShieldBonus = 0;
+
   if(result === 1 && myB === 6) oppDmg = 2; if(result === 2 && oppB === 6) myDmg = 2; 
   if(myB === 4 && result === 2) { myDmg = 0; oppDmg = 1; } if(oppB === 4 && result === 1) { oppDmg = 0; myDmg = 1; } 
-  if(myB === 8 && myDmg > 0) myDmg = 0; if(oppB === 8 && oppDmg > 0) oppDmg = 0; 
+  
+  // ★聖なる盾(8)の処理：負けた場合、ダメージを0にして次ターンのボーナスを付与
+  if(myB === 8 && result === 2) { myDmg = 0; nextMyShieldBonus = 2; }
+  if(oppB === 8 && result === 1) { oppDmg = 0; nextOppShieldBonus = 2; }
 
   let nextMyHP = data[`${me}_hp`] - myDmg + (myB === 3 ? 1 : 0);
   let nextOppHP = data[`${opp}_hp`] - oppDmg + (oppB === 3 ? 1 : 0);
 
+  // --- 演出表示 ---
   ui.myField.textContent = myVal; ui.myField.classList.add("open"); ui.myField.style.background = "white";
   ui.oppField.textContent = oppVal; ui.oppField.classList.add("open"); ui.oppField.style.background = "white";
   document.getElementById("opp-blessing-msg").textContent = oppB !== null ? `相手:${BLESSINGS[oppB].name.split('(')[0]}` : "";
@@ -445,10 +451,9 @@ const resolveTurn演出 = (data) => {
   else { msg = "DRAW ⚔️"; color = "white"; }
   
   ui.gameMsg.textContent = msg; ui.gameMsg.style.color = color;
-
-  ui.turnResultMsg.textContent = msg;
-  ui.turnResultMsg.style.color = color;
+  ui.turnResultMsg.textContent = msg; ui.turnResultMsg.style.color = color;
   
+  // 相手の数字の計算式表示
   let oppValText = `${oppRawVal}`;
   if (oppRawVal !== oppVal) oppValText += ` (補正後: ${oppVal})`;
   ui.turnOppCard.textContent = oppValText;
@@ -458,6 +463,7 @@ const resolveTurn演出 = (data) => {
     ui.turnResultOverlay.style.display = "flex";
   }, 800);
 
+  // ポップアップを閉じた時、次のターンへ
   ui.turnResultOverlay.onclick = async () => {
     ui.turnResultOverlay.style.display = "none";
     ui.turnResultOverlay.onclick = null; 
@@ -467,7 +473,9 @@ const resolveTurn演出 = (data) => {
         await updateDoc(roomRef, { [`${me}_hp`]: nextMyHP, [`${opp}_hp`]: nextOppHP, gameOver: true });
       } else {
         await updateDoc(roomRef, {
-          [`${me}_hp`]: nextMyHP, [`${opp}_hp`]: nextOppHP, [`${me}_ready`]: false, [`${opp}_ready`]: false,
+          [`${me}_hp`]: nextMyHP, [`${opp}_hp`]: nextOppHP, 
+          [`${me}_shieldBonus`]: nextMyShieldBonus, [`${opp}_shieldBonus`]: nextOppShieldBonus,
+          [`${me}_ready`]: false, [`${opp}_ready`]: false,
           [`${me}_card1`]: null, [`${me}_card2`]: null, [`${me}_blessing`]: null,
           [`${opp}_card1`]: null, [`${opp}_card2`]: null, [`${opp}_blessing`]: null, turn: data.turn + 1
         });
