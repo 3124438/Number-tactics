@@ -1,7 +1,7 @@
 import { db } from "./firebase-config.js";
 import { doc, setDoc, getDoc, updateDoc, onSnapshot, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// --- ★データ定義（説明文を追加） ---
+// --- データ定義 ---
 const BLESSINGS = {
   0: { name: "巨人の剛腕(+4)", max: 1, desc: "このターンの自分の数字を +4 する。" }, 
   1: { name: "あべこべの世界", max: 5, desc: "このターンのみ、「数字が小さい方」が勝利する。" },
@@ -24,7 +24,7 @@ const ui = {
   myId: document.getElementById("my-id-display"), myIdBottom: document.getElementById("my-id-display-bottom"),
   points: document.getElementById("my-points"), myRank: document.getElementById("my-rank"), bet: document.getElementById("bet-points"),
   betPercentDisplay: document.getElementById("bet-percent-display"), betSlider: document.getElementById("bet-slider"),
-  deckGrid: document.getElementById("deck-grid"), deckTotal: document.getElementById("deck-total"),
+  deckGrid: document.getElementById("deck-grid"), deckTotal: document.getElementById("deck-total"), resetDeckBtn: document.getElementById("reset-deck-btn"),
   ranking: document.getElementById("ranking-list"), blessings: document.getElementById("blessing-container"),
   targetInput: document.getElementById("target-id-input"), matchBtn: document.getElementById("match-btn"), status: document.getElementById("status-message"),
   myHP: document.getElementById("my-hp"), oppHP: document.getElementById("opponent-hp"), myField: document.getElementById("my-field"), oppField: document.getElementById("opponent-field"),
@@ -32,6 +32,14 @@ const ui = {
   resTitle: document.getElementById("result-title"), resPoint: document.getElementById("result-point-info"), backBtn: document.getElementById("back-lobby-btn"),
   turnResultOverlay: document.getElementById("turn-result-overlay"), turnResultMsg: document.getElementById("turn-result-msg"),
   turnOppCard: document.getElementById("turn-opp-card"), turnOppBlessing: document.getElementById("turn-opp-blessing"),
+  
+  // ★加護確認ポップアップ用
+  blessingConfirmOverlay: document.getElementById("blessing-confirm-overlay"),
+  confirmBlessingName: document.getElementById("confirm-blessing-name"),
+  confirmBlessingDesc: document.getElementById("confirm-blessing-desc"),
+  confirmBlessingCount: document.getElementById("confirm-blessing-count"),
+  useBlessingBtn: document.getElementById("use-blessing-btn"),
+  cancelBlessingBtn: document.getElementById("cancel-blessing-btn")
 };
 
 // --- グローバル状態 ---
@@ -40,7 +48,8 @@ let state = {
   selectedBlessings: [], blessingCounts: {},
   myDeckConfig: {}, myInventory: {}, 
   isUnionMode: false, unionCount: 2, lastCardSum: null,
-  turnCard1: null, turnCard2: null, turnBlessing: null, isProcessing: false
+  turnCard1: null, turnCard2: null, turnBlessing: null, isProcessing: false,
+  pendingBlessingId: null // ポップアップで確認中の加護ID
 };
 let listeners = { opponent: null, room: null };
 
@@ -120,32 +129,28 @@ function renderDeckEditor() {
   }
 }
 
-// ★加護の表示に説明文（desc）を追加
+// ★追加：デッキを初期値に戻すボタン
+ui.resetDeckBtn.addEventListener("click", () => {
+  if (confirm("デッキを初期構成に戻しますか？")) {
+    state.myDeckConfig = { ...DEFAULT_DECK };
+    renderDeckEditor();
+  }
+});
+
 function renderBlessingSetup() {
   ui.blessings.innerHTML = "";
   Object.keys(BLESSINGS).forEach(id => {
     const label = document.createElement("label");
-    
     const cb = document.createElement("input"); 
     cb.type = "checkbox"; cb.value = id; cb.className = "blessing-cb";
     cb.onchange = () => { if(screens.lobby.querySelectorAll('.blessing-cb:checked').length > 3) cb.checked = false; };
     
-    const textContainer = document.createElement("div");
-    textContainer.className = "blessing-text-container";
+    const textContainer = document.createElement("div"); textContainer.className = "blessing-text-container";
+    const titleSpan = document.createElement("div"); titleSpan.className = "blessing-info-title"; titleSpan.textContent = BLESSINGS[id].name;
+    const descSpan = document.createElement("div"); descSpan.className = "blessing-info-desc"; descSpan.textContent = BLESSINGS[id].desc;
 
-    const titleSpan = document.createElement("div"); 
-    titleSpan.className = "blessing-info-title"; 
-    titleSpan.textContent = BLESSINGS[id].name;
-
-    const descSpan = document.createElement("div");
-    descSpan.className = "blessing-info-desc";
-    descSpan.textContent = BLESSINGS[id].desc;
-
-    textContainer.appendChild(titleSpan);
-    textContainer.appendChild(descSpan);
-
-    label.appendChild(cb);
-    label.appendChild(textContainer);
+    textContainer.appendChild(titleSpan); textContainer.appendChild(descSpan);
+    label.appendChild(cb); label.appendChild(textContainer);
     ui.blessings.appendChild(label);
   });
 }
@@ -181,7 +186,6 @@ ui.matchBtn.addEventListener("click", async () => {
   const checked = screens.lobby.querySelectorAll('.blessing-cb:checked');
   state.selectedBlessings = Array.from(checked).map(cb => parseInt(cb.value));
   if(state.selectedBlessings.length === 0) return alert("加護を1つ以上選んでください");
-
   if (Object.values(state.myDeckConfig).reduce((a, b) => a + b, 0) !== 30) return alert("デッキを30枚に調整してください");
 
   ui.matchBtn.disabled = true; ui.status.textContent = "相手の入力を待っています...";
@@ -195,6 +199,33 @@ ui.matchBtn.addEventListener("click", async () => {
       setTimeout(() => startGame(targetID), 1000);
     }
   });
+});
+
+// ----------------------------------
+// ★加護確認ポップアップのボタンイベント
+// ----------------------------------
+ui.cancelBlessingBtn.addEventListener("click", () => {
+  ui.blessingConfirmOverlay.style.display = "none";
+  state.pendingBlessingId = null;
+});
+
+ui.useBlessingBtn.addEventListener("click", () => {
+  const id = state.pendingBlessingId;
+  
+  // すでに選択中の場合は「解除」する
+  if (state.turnBlessing === id) {
+    state.turnBlessing = null;
+    ui.activeBlessings.querySelectorAll("button").forEach(b=>b.classList.remove("selected"));
+  } else {
+    // 選択する
+    state.turnBlessing = id;
+    ui.activeBlessings.querySelectorAll("button").forEach(b=>b.classList.remove("selected"));
+    const btn = ui.activeBlessings.querySelector(`button[data-id="${id}"]`);
+    if(btn) btn.classList.add("selected");
+  }
+  
+  ui.blessingConfirmOverlay.style.display = "none";
+  state.pendingBlessingId = null;
 });
 
 // ----------------------------------
@@ -291,15 +322,38 @@ const startGame = async (targetID) => {
   document.getElementById("last-card").textContent = "なし"; document.getElementById("opp-blessing-msg").textContent = "";
 
   ui.activeBlessings.innerHTML = ""; state.blessingCounts = {};
+  
   state.selectedBlessings.forEach(id => {
     state.blessingCounts[id] = BLESSINGS[id].max;
     if(id === 5) return; 
+    
     const btn = document.createElement("button"); btn.className = "blessing-btn-in-game"; btn.dataset.id = id;
+    
+    // ★加護ボタンを押した時のポップアップ処理
     btn.onclick = () => {
       if (state.isProcessing) return;
-      if (state.turnBlessing === id) { state.turnBlessing = null; btn.classList.remove("selected"); }
-      else { state.turnBlessing = id; ui.activeBlessings.querySelectorAll("button").forEach(b=>b.classList.remove("selected")); btn.classList.add("selected"); }
+      
+      const isSelected = (state.turnBlessing === id);
+      
+      // ポップアップの中身をセット
+      ui.confirmBlessingName.textContent = BLESSINGS[id].name.split('(')[0];
+      ui.confirmBlessingDesc.textContent = BLESSINGS[id].desc;
+      ui.confirmBlessingCount.textContent = state.blessingCounts[id];
+      
+      if (isSelected) {
+        ui.useBlessingBtn.textContent = "使用を取り消す";
+        ui.useBlessingBtn.style.backgroundColor = "#e74c3c";
+        ui.useBlessingBtn.style.color = "white";
+      } else {
+        ui.useBlessingBtn.textContent = "使用する";
+        ui.useBlessingBtn.style.backgroundColor = "#f1c40f";
+        ui.useBlessingBtn.style.color = "black";
+      }
+      
+      state.pendingBlessingId = id;
+      ui.blessingConfirmOverlay.style.display = "flex";
     };
+    
     ui.activeBlessings.appendChild(btn);
   });
   updateBlessingButtonsUI();
@@ -398,7 +452,7 @@ const resolveTurn演出 = (data) => {
   let oppValText = `${oppRawVal}`;
   if (oppRawVal !== oppVal) oppValText += ` (補正後: ${oppVal})`;
   ui.turnOppCard.textContent = oppValText;
-  ui.turnOppBlessing.textContent = oppB !== null ? BLESSINGS[oppB].name.split('(')[0] : "使用なし"; // 加護の名前だけきれいに表示
+  ui.turnOppBlessing.textContent = oppB !== null ? BLESSINGS[oppB].name.split('(')[0] : "使用なし"; 
 
   setTimeout(() => {
     ui.turnResultOverlay.style.display = "flex";
