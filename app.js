@@ -10,22 +10,27 @@ const BLESSINGS = {
   8: { name: "聖なる盾", max: 1 }, 9: { name: "重力の呪縛(-4)", max: 1 }
 };
 
-// ★デッキ上限とデフォルト構成
 const DECK_LIMITS = { 0: 1, 1: 16, 2: 8, 3: 5, 4: 4, 5: 3, 6: 2, 7: 2, 8: 2, 9: 1 };
-const DEFAULT_DECK = { 0:1, 1:10, 2:6, 3:4, 4:3, 5:2, 6:1, 7:1, 8:1, 9:1 }; // 計30枚
+const DEFAULT_DECK = { 0:1, 1:10, 2:6, 3:4, 4:3, 5:2, 6:1, 7:1, 8:1, 9:1 }; 
 
 // --- DOM取得 ---
 const screens = { lobby: document.getElementById("lobby-screen"), game: document.getElementById("game-screen"), result: document.getElementById("result-screen") };
 const ui = {
-  myId: document.getElementById("my-id-display"), points: document.getElementById("my-points"), 
-  myRank: document.getElementById("my-rank"), bet: document.getElementById("bet-points"),
+  myId: document.getElementById("my-id-display"), myIdBottom: document.getElementById("my-id-display-bottom"),
+  points: document.getElementById("my-points"), myRank: document.getElementById("my-rank"), bet: document.getElementById("bet-points"),
   betPercentDisplay: document.getElementById("bet-percent-display"), betSlider: document.getElementById("bet-slider"),
   deckGrid: document.getElementById("deck-grid"), deckTotal: document.getElementById("deck-total"),
   ranking: document.getElementById("ranking-list"), blessings: document.getElementById("blessing-container"),
   targetInput: document.getElementById("target-id-input"), matchBtn: document.getElementById("match-btn"), status: document.getElementById("status-message"),
   myHP: document.getElementById("my-hp"), oppHP: document.getElementById("opponent-hp"), myField: document.getElementById("my-field"), oppField: document.getElementById("opponent-field"),
   gameMsg: document.getElementById("game-message"), hand: document.getElementById("my-hand"), unionBtn: document.getElementById("union-btn"), activeBlessings: document.getElementById("active-blessings"),
-  resTitle: document.getElementById("result-title"), resPoint: document.getElementById("result-point-info"), backBtn: document.getElementById("back-lobby-btn")
+  resTitle: document.getElementById("result-title"), resPoint: document.getElementById("result-point-info"), backBtn: document.getElementById("back-lobby-btn"),
+  
+  // ★ポップアップ用DOM
+  turnResultOverlay: document.getElementById("turn-result-overlay"),
+  turnResultMsg: document.getElementById("turn-result-msg"),
+  turnOppCard: document.getElementById("turn-opp-card"),
+  turnOppBlessing: document.getElementById("turn-opp-blessing"),
 };
 
 // --- グローバル状態 ---
@@ -46,7 +51,6 @@ const generateUID = () => Math.floor(100000000 + Math.random() * 900000000).toSt
 // ロビー処理
 // ----------------------------------
 
-// ★自分の順位とTOP5の表示
 async function loadRanking() {
   ui.ranking.innerHTML = "<li>読み込み中...</li>";
   try {
@@ -61,7 +65,7 @@ async function loadRanking() {
     
     let rank = 1; let myRankStr = "-"; let count = 0;
     snap.forEach(doc => {
-      if (doc.id === state.uid) myRankStr = rank; // 自分の順位を記憶
+      if (doc.id === state.uid) myRankStr = rank;
       if (count < 5) {
         const li = document.createElement("li");
         li.innerHTML = `<b>${rank}位: ${doc.data().points} pt</b> - ID: ${formatUID(doc.id)}`;
@@ -69,11 +73,10 @@ async function loadRanking() {
       }
       rank++; count++;
     });
-    ui.myRank.textContent = myRankStr; // 画面に反映
+    ui.myRank.textContent = myRankStr; 
   } catch (e) { ui.ranking.innerHTML = "<li>取得失敗</li>"; }
 }
 
-// 掛け金計算とスライダー処理
 function updateBetPoints() {
   state.betPts = Math.max(1, Math.ceil(state.points * (state.betPercent / 100)));
   ui.bet.textContent = state.betPts;
@@ -85,12 +88,11 @@ ui.betSlider.addEventListener("input", (e) => {
   updateBetPoints();
 });
 
-// ★デッキエディタの描画
 function renderDeckEditor() {
   ui.deckGrid.innerHTML = "";
   let total = Object.values(state.myDeckConfig).reduce((a, b) => a + b, 0);
   ui.deckTotal.textContent = total;
-  ui.deckTotal.style.color = (total === 30) ? "#27ae60" : "#e74c3c"; // 30枚なら緑、違えば赤
+  ui.deckTotal.style.color = (total === 30) ? "#27ae60" : "#e74c3c";
   
   for (let i = 0; i <= 9; i++) {
     const row = document.createElement("div"); row.className = "deck-row";
@@ -108,10 +110,8 @@ function renderDeckEditor() {
     
     controls.append(minus, count, plus); row.append(label, limitText, controls); ui.deckGrid.appendChild(row);
   }
-  
   localStorage.setItem("myDeckConfig", JSON.stringify(state.myDeckConfig));
   
-  // 30枚じゃないとマッチングできない
   if (total !== 30) {
     ui.matchBtn.disabled = true; ui.status.textContent = `デッキを30枚にしてください(現在${total}枚)`;
   } else {
@@ -135,8 +135,8 @@ async function init() {
   state.uid = localStorage.getItem("myUID") || generateUID();
   localStorage.setItem("myUID", state.uid);
   ui.myId.textContent = formatUID(state.uid);
+  if(ui.myIdBottom) ui.myIdBottom.textContent = formatUID(state.uid);
 
-  // デッキ読み込み
   const savedDeck = localStorage.getItem("myDeckConfig");
   state.myDeckConfig = savedDeck ? JSON.parse(savedDeck) : { ...DEFAULT_DECK };
 
@@ -151,14 +151,8 @@ async function init() {
   }
   ui.points.textContent = state.points;
   
-  // スライダーとポイント初期化
-  ui.betSlider.value = state.betPercent;
-  ui.betPercentDisplay.textContent = state.betPercent + "%";
-  updateBetPoints();
-
-  loadRanking();
-  renderBlessingSetup();
-  renderDeckEditor();
+  ui.betSlider.value = state.betPercent; ui.betPercentDisplay.textContent = state.betPercent + "%";
+  updateBetPoints(); loadRanking(); renderBlessingSetup(); renderDeckEditor();
 }
 
 ui.matchBtn.addEventListener("click", async () => {
@@ -169,7 +163,6 @@ ui.matchBtn.addEventListener("click", async () => {
   state.selectedBlessings = Array.from(checked).map(cb => parseInt(cb.value));
   if(state.selectedBlessings.length === 0) return alert("加護を1つ以上選んでください");
 
-  // デッキ枚数再確認
   if (Object.values(state.myDeckConfig).reduce((a, b) => a + b, 0) !== 30) return alert("デッキを30枚に調整してください");
 
   ui.matchBtn.disabled = true; ui.status.textContent = "相手の入力を待っています...";
@@ -212,7 +205,7 @@ const checkPlusMinus3 = (num) => {
   for(let i=0; i<=9; i++){
     if((state.myInventory[i] || 0) > 0 && Math.abs(i - state.lastCardSum) >= 3) { hasValidCard = true; break; }
   }
-  if (!hasValidCard) return true; // 出せるカードがない場合は免除
+  if (!hasValidCard) return true; 
   return Math.abs(num - state.lastCardSum) >= 3;
 };
 
@@ -230,7 +223,7 @@ const handleCardSelection = async (num) => {
     }
   } else {
     state.turnCard1 = num;
-    if(state.turnBlessing !== 2) { state.myInventory[num]--; } // 混沌以外は消費
+    if(state.turnBlessing !== 2) { state.myInventory[num]--; } 
     else { state.turnCard1 = Math.floor(Math.random()*10); }
   }
 
@@ -269,7 +262,6 @@ const startGame = async (targetID) => {
   state.oppHP = 3; state.unionCount = 2; state.lastCardSum = null; state.isProcessing = false;
   state.turnCard1 = null; state.turnCard2 = null; state.turnBlessing = null; state.isUnionMode = false;
   
-  // 編集したデッキを持ち込む
   state.myInventory = { ...state.myDeckConfig };
 
   ui.myHP.textContent = state.myHP; ui.oppHP.textContent = 3;
@@ -297,7 +289,7 @@ const startGame = async (targetID) => {
     if(state.unionCount <= 0 || state.isProcessing) return;
     state.isUnionMode = !state.isUnionMode;
     ui.unionBtn.classList.toggle("active", state.isUnionMode);
-    if(!state.isUnionMode) { state.turnCard1 = null; renderInventoryHand(); } // キャンセル時
+    if(!state.isUnionMode) { state.turnCard1 = null; renderInventoryHand(); } 
   };
 
   renderInventoryHand();
@@ -328,63 +320,83 @@ const startGame = async (targetID) => {
 };
 
 // ----------------------------------
-// ★勝敗判定（0vs9の特殊判定対応）
+// ★勝敗判定とポップアップ表示（タップ進行へ変更）
 // ----------------------------------
 const resolveTurn演出 = (data) => {
   const me = state.uid; const opp = state.targetUID;
   const roomRef = doc(db, "rooms", state.roomID);
 
   const myB = data[`${me}_blessing`]; const oppB = data[`${opp}_blessing`];
-  let myVal = data[`${me}_card1`] + (data[`${me}_card2`] || 0);
-  let oppVal = data[`${opp}_card1`] + (data[`${opp}_card2`] || 0);
+  const oppRawVal = data[`${opp}_card1`] + (data[`${opp}_card2`] || 0); // 相手の素の数字
 
-  // 1. 弱体化(9) & 強化(0, 7)
+  let myVal = data[`${me}_card1`] + (data[`${me}_card2`] || 0);
+  let oppVal = oppRawVal;
+
   if(myB === 9) oppVal = Math.max(0, oppVal - 4); if(oppB === 9) myVal = Math.max(0, myVal - 4);
   if(myB === 0) myVal += 4; if(oppB === 0) oppVal += 4;
   if(myB === 7) myVal += Math.max(0, (data[`${opp}_hp`] - data[`${me}_hp`]) * 2);
   if(oppB === 7) oppVal += Math.max(0, (data[`${me}_hp`] - data[`${opp}_hp`]) * 2);
 
-  // 2. 勝敗判定（0vs9 の特殊ルールと あべこべ(1)）
   const isReverse = (myB === 1 || oppB === 1);
   let result = 0; // 0:draw, 1:myWin, 2:oppWin
   
   if (myVal === oppVal) {
     result = 0;
   } else {
-    // ★0と9の特殊判定（合体による合計値でも発動）
     const myIsZeroOppIsNine = (myVal === 0 && oppVal === 9);
     const myIsNineOppIsZero = (myVal === 9 && oppVal === 0);
     
-    if (myIsZeroOppIsNine) {
-      result = isReverse ? 2 : 1; // 通常は0の勝ち、あべこべ時は9の勝ち
-    } else if (myIsNineOppIsZero) {
-      result = isReverse ? 1 : 2; 
-    } else {
-      // 通常の大小比較
+    if (myIsZeroOppIsNine) result = isReverse ? 2 : 1;
+    else if (myIsNineOppIsZero) result = isReverse ? 1 : 2; 
+    else {
       if (!isReverse) result = (myVal > oppVal) ? 1 : 2;
       else result = (myVal < oppVal) ? 1 : 2;
     }
   }
 
-  // 3. ダメージ処理
   let myDmg = (result === 2) ? 1 : 0; let oppDmg = (result === 1) ? 1 : 0;
-  if(result === 1 && myB === 6) oppDmg = 2; if(result === 2 && oppB === 6) myDmg = 2; // 雷
-  if(myB === 4 && result === 2) { myDmg = 0; oppDmg = 1; } if(oppB === 4 && result === 1) { oppDmg = 0; myDmg = 1; } // 反射
-  if(myB === 8 && myDmg > 0) myDmg = 0; if(oppB === 8 && oppDmg > 0) oppDmg = 0; // 盾
+  if(result === 1 && myB === 6) oppDmg = 2; if(result === 2 && oppB === 6) myDmg = 2; 
+  if(myB === 4 && result === 2) { myDmg = 0; oppDmg = 1; } if(oppB === 4 && result === 1) { oppDmg = 0; myDmg = 1; } 
+  if(myB === 8 && myDmg > 0) myDmg = 0; if(oppB === 8 && oppDmg > 0) oppDmg = 0; 
 
   let nextMyHP = data[`${me}_hp`] - myDmg + (myB === 3 ? 1 : 0);
   let nextOppHP = data[`${opp}_hp`] - oppDmg + (oppB === 3 ? 1 : 0);
 
-  // 演出
+  // 盤面の演出表示
   ui.myField.textContent = myVal; ui.myField.classList.add("open"); ui.myField.style.background = "white";
   ui.oppField.textContent = oppVal; ui.oppField.classList.add("open"); ui.oppField.style.background = "white";
   document.getElementById("opp-blessing-msg").textContent = oppB !== null ? `相手:${BLESSINGS[oppB].name.split('(')[0]}` : "";
 
-  if(result === 1) { ui.gameMsg.textContent = "WIN! 🎉"; ui.gameMsg.style.color = "#f1c40f"; }
-  else if(result === 2) { ui.gameMsg.textContent = "LOSE... 💦"; ui.gameMsg.style.color = "#3498db"; }
-  else { ui.gameMsg.textContent = "DRAW ⚔️"; ui.gameMsg.style.color = "white"; }
+  let msg = "", color = "";
+  if(result === 1) { msg = "WIN! 🎉"; color = "#f1c40f"; }
+  else if(result === 2) { msg = "LOSE... 💦"; color = "#3498db"; }
+  else { msg = "DRAW ⚔️"; color = "white"; }
+  
+  ui.gameMsg.textContent = msg; ui.gameMsg.style.color = color;
 
-  setTimeout(async () => {
+  // ★ポップアップ（オーバーレイ）のテキスト準備
+  ui.turnResultMsg.textContent = msg;
+  ui.turnResultMsg.style.color = color;
+  
+  // 相手の数字（加護による補正があった場合は元の数字も表示する）
+  let oppValText = `${oppRawVal}`;
+  if (oppRawVal !== oppVal) oppValText += ` (補正後: ${oppVal})`;
+  ui.turnOppCard.textContent = oppValText;
+  
+  // 相手の加護
+  ui.turnOppBlessing.textContent = oppB !== null ? BLESSINGS[oppB].name : "使用なし";
+
+  // 少し待ってからポップアップを表示（盤面を見る時間を作る）
+  setTimeout(() => {
+    ui.turnResultOverlay.style.display = "flex";
+  }, 800);
+
+  // ★ポップアップをタップした時の処理（次へ進む）
+  ui.turnResultOverlay.onclick = async () => {
+    ui.turnResultOverlay.style.display = "none";
+    ui.turnResultOverlay.onclick = null; // リセット
+
+    // ホスト側はタップしたタイミングでDBを更新
     if(state.isHost) {
       if(nextMyHP <= 0 || nextOppHP <= 0) {
         await updateDoc(roomRef, { [`${me}_hp`]: nextMyHP, [`${opp}_hp`]: nextOppHP, gameOver: true });
@@ -397,10 +409,12 @@ const resolveTurn演出 = (data) => {
       }
     }
 
+    // 決着がついたか、次のターンへ進むかの振り分け
     if(nextMyHP <= 0 || nextOppHP <= 0) {
       if(listeners.room) listeners.room();
       showResult(nextMyHP > nextOppHP);
     } else {
+      // 自分のローカルUIをリセットして次のターンへ
       ui.myField.textContent = "選ぶ"; ui.myField.style.background = "#ecf0f1"; ui.myField.classList.remove("open");
       ui.oppField.textContent = "考え中"; ui.oppField.style.background = "#ecf0f1"; ui.oppField.classList.remove("open");
       document.getElementById("opp-blessing-msg").textContent = "";
@@ -408,7 +422,7 @@ const resolveTurn演出 = (data) => {
       state.turnCard1 = null; state.turnCard2 = null; state.turnBlessing = null; state.isProcessing = false;
       renderInventoryHand(); 
     }
-  }, 3000);
+  };
 };
 
 // ----------------------------------
