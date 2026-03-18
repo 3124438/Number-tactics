@@ -1,0 +1,60 @@
+/* style.css */
+body {
+  font-family: sans-serif;
+  background-color: #f4f4f9;
+  color: #333;
+  text-align: center;
+  margin: 0;
+  padding: 20px;
+}
+
+.container {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.id-text {
+  font-size: 32px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #2c3e50;
+  margin: 10px 0;
+}
+
+input {
+  width: 80%;
+  padding: 10px;
+  font-size: 18px;
+  text-align: center;
+  margin-bottom: 10px;
+  border: 2px solid #ddd;
+  border-radius: 5px;
+}
+
+button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:hover {
+  background-color: #c0392b;
+}
+
+#status-message {
+  font-weight: bold;
+  color: #7f8c8d;
+}
