@@ -111,3 +111,76 @@ matchBtn.addEventListener("click", async () => {
 
 // プログラムをスタート
 init();
+// app.js の最後に追加
+
+// --- 🔽 ここからゲーム本編の処理 🔽 ---
+
+const gameScreen = document.getElementById("game-screen");
+const lobbyScreen = document.querySelector(".container");
+const myHandContainer = document.getElementById("my-hand");
+
+let myDeck = [];
+let myHand = [];
+let roomID = "";
+
+// 44枚のプールから30枚のデッキをランダムに作成する関数
+const generateDeck = () => {
+  // 仕様書通りの枚数制限
+  const pool = [
+    0, 
+    ...Array(16).fill(1), 
+    ...Array(8).fill(2), 
+    ...Array(5).fill(3), 
+    ...Array(4).fill(4), 
+    ...Array(3).fill(5), 
+    ...Array(2).fill(6), 
+    ...Array(2).fill(7), 
+    ...Array(2).fill(8), 
+    9
+  ];
+  
+  // シャッフル（Fisher-Yatesアルゴリズム）
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  
+  // 先頭の30枚をデッキとする
+  return pool.slice(0, 30);
+};
+
+// 画面に手札を描画する関数
+const renderHand = () => {
+  myHandContainer.innerHTML = ""; // 一度クリア
+  myHand.forEach((cardNumber, index) => {
+    const cardEl = document.createElement("div");
+    cardEl.className = "hand-card";
+    cardEl.textContent = cardNumber;
+    
+    // カードをクリックした時の処理（仮）
+    cardEl.onclick = () => {
+      alert(`${cardNumber} のカードが選ばれました！(次はここに±3の判定などを入れます)`);
+    };
+    
+    myHandContainer.appendChild(cardEl);
+  });
+};
+
+// ゲーム開始処理
+const startGame = (targetID) => {
+  // 1. ロビーを隠してゲーム画面を表示
+  lobbyScreen.style.display = "none";
+  gameScreen.style.display = "flex";
+
+  // 2. お互いに共通のルームIDを生成（小さいID_大きいID のルールにする）
+  const idArray = [myUID, targetID].sort();
+  roomID = `${idArray[0]}_${idArray[1]}`;
+  console.log("入室したルーム:", roomID);
+
+  // 3. デッキを作成し、初期手札を5枚引く
+  myDeck = generateDeck();
+  myHand = myDeck.splice(0, 5); // デッキから5枚取り出して手札へ
+
+  // 4. 手札を画面に表示
+  renderHand();
+};
