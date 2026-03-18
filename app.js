@@ -3,11 +3,16 @@ import { doc, setDoc, getDoc, updateDoc, onSnapshot, collection, query, orderBy,
 
 // --- データの定義 ---
 const BLESSINGS = {
-  0: { name: "巨人の剛腕(+4)", max: 1 }, 1: { name: "あべこべの世界", max: 5 },
-  2: { name: "混沌の儀式", max: 3 }, 3: { name: "再生の祈り", max: 2 },
-  4: { name: "全反射", max: 1 }, 5: { name: "不屈の魂(初期HP+2)", max: 1 },
-  6: { name: "審判の雷", max: 1 }, 7: { name: "復讐の誓い", max: 1 },
-  8: { name: "聖なる盾", max: 1 }, 9: { name: "重力の呪縛(-4)", max: 1 }
+  0: { name: "巨人の剛腕(+4)", max: 1 }
+  1: { name: "あべこべの世界", max: 5 }
+  2: { name: "混沌の儀式", max: 3 }
+  3: { name: "再生の祈り", max: 2 },
+  4: { name: "全反射", max: 1 }
+  5: { name: "不屈の魂(初期HP+2)", max: 1 },
+  6: { name: "審判の雷", max: 1 }
+  7: { name: "復讐の誓い", max: 1 }
+  8: { name: "聖なる盾", max: 1 }
+  9: { name: "重力の呪縛(-4)", max: 1 }
 };
 
 // --- DOM取得 ---
