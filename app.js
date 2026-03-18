@@ -87,20 +87,18 @@ matchBtn.addEventListener("click", async () => {
       if (docSnap.exists()) {
         const opponentData = docSnap.data();
         
-        // 相手も自分のIDを入力してくれたら（相思相愛）
+       // 相手も自分のIDを入力してくれたら（相思相愛）
         if (opponentData.targetID === myUID) {
           statusMessage.textContent = "🔥 マッチング成功！対戦準備中... 🔥";
           statusMessage.style.color = "#e74c3c";
           
-          // 監視を終了する
-          opponentListener();
+          opponentListener(); // 監視を終了
           
-          // ※ここで対戦画面へ切り替える処理を呼び出します
-          // （今はテスト用にアラートを出します）
-          setTimeout(() => alert("ゲーム画面へ移動します！"), 500);
+          // ★ アラートを消して、以下に変更 ★
+          setTimeout(() => {
+            startGame(targetID); // ゲーム画面へ移行！
+          }, 1000);
         }
-      }
-    });
 
   } catch (error) {
     console.error(error);
