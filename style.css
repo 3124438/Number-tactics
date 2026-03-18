@@ -1,29 +1,68 @@
-body { font-family: sans-serif; background-color: #f4f4f9; color: #333; text-align: center; margin: 0; padding: 10px; }
-.container { max-width: 400px; margin: 0 auto; }
-.card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 15px; }
-.id-text { font-size: 24px; font-weight: bold; color: #2c3e50; }
-input { width: 80%; padding: 10px; font-size: 18px; text-align: center; margin-bottom: 10px; border: 2px solid #ddd; border-radius: 5px; }
-button { background-color: #e74c3c; color: white; border: none; padding: 10px 15px; font-size: 16px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+/* 全体設定 */
+* { box-sizing: border-box; touch-action: manipulation; }
+body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f0f3f6; color: #333; text-align: center; margin: 0; padding: 10px; font-size: 14px; }
+.container { max-width: 400px; margin: 0 auto; padding-bottom: 20px; }
+.game-title { font-size: 28px; color: #2c3e50; margin: 10px 0; }
+.card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); margin-bottom: 12px; text-align: left; }
+.card h2 { font-size: 16px; margin-top: 0; border-left: 4px solid #3498db; padding-left: 8px; color: #34495e; }
+
+/* ランキング */
+#ranking-list { list-style: none; padding: 0; margin: 0; font-size: 13px; }
+#ranking-list li { border-bottom: 1px solid #eee; padding: 6px 0; color: #555; }
+
+/* ロビー情報 */
+.id-text { font-size: 20px; font-weight: bold; color: #e74c3c; letter-spacing: 1px; }
+input { width: 100%; padding: 12px; font-size: 18px; text-align: center; margin-bottom: 10px; border: 2px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }
+button { background-color: #e74c3c; color: white; border: none; padding: 12px; width: 100%; font-size: 16px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
 button:hover { background-color: #c0392b; }
-button:disabled { background-color: #95a5a6; cursor: not-allowed; }
+button:disabled { background-color: #bdc3c7 !important; cursor: not-allowed; }
 
-/* ランキングと準備枠 */
-#ranking-list { list-style: none; padding: 0; margin: 0; text-align: left; font-size: 14px; }
-#ranking-list li { border-bottom: 1px solid #eee; padding: 5px 0; }
-.checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; text-align: left; }
-.checkbox-grid label { font-size: 12px; cursor: pointer; }
+/* ★加護（ロビー）：読める縦一列リスト */
+.blessing-list-vertical { display: flex; flex-direction: column; gap: 8px; }
+.blessing-list-vertical label { display: flex; align-items: center; background: #f8f9fa; border: 1px solid #eee; padding: 10px; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+.blessing-list-vertical label:hover { background: #e9ecef; }
+.blessing-list-vertical input[type="checkbox"] { width: 20px; height: 20px; margin-right: 10px; cursor: pointer; }
+.blessing-info-text { font-size: 13px; color: #2c3e50; font-weight: bold; }
 
-/* ゲーム画面 */
-.game-container { max-width: 500px; margin: 0 auto; background-color: #2c3e50; color: white; border-radius: 10px; padding: 15px; height: 90vh; display: flex; flex-direction: column; justify-content: space-between; }
-.player-area { background-color: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; text-align: center; }
-.status { font-size: 16px; font-weight: bold; margin-bottom: 5px; }
-.field-card { width: 70px; height: 100px; background-color: #ecf0f1; color: #2c3e50; margin: 0 auto; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
-.center-area { text-align: center; font-size: 24px; font-weight: bold; color: #e74c3c; }
-.hand-container { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-top: 10px; }
-.hand-card { width: 45px; height: 65px; background-color: white; color: #333; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; cursor: pointer; border: 2px solid transparent; }
-.hand-card.disabled { opacity: 0.3; pointer-events: none; }
-.action-btn { background-color: #9b59b6; padding: 5px 10px; font-size: 12px; margin: 5px; }
-.action-btn.active { border: 2px solid #f1c40f; background-color: #8e44ad; }
-.blessing-buttons { display: flex; justify-content: center; gap: 5px; margin-bottom: 5px; }
-.blessing-btn { background-color: #34495e; color: white; border: 1px solid #ecf0f1; padding: 4px; font-size: 10px; border-radius: 3px; cursor: pointer; }
-.blessing-btn.selected { background-color: #f1c40f; color: black; }
+/* ----------------------------------
+   ゲーム画面（バトル）
+---------------------------------- */
+.game-container { max-width: 500px; margin: 0 auto; background-color: #1a252f; color: white; border-radius: 15px; padding: 10px; height: 95vh; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
+.player-area { background-color: rgba(255,255,255,0.05); padding: 8px; border-radius: 10px; text-align: center; }
+.status-bar { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: bold; margin-bottom: 5px; padding: 0 5px; }
+.my-status { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px; margin-top: 5px; }
+
+/* 場に出たカード */
+.field-card { width: 60px; height: 85px; background-color: #34495e; color: #ecf0f1; margin: 5px auto; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.2); transition: all 0.3s; }
+.field-card.open { background-color: white; color: #2c3e50; font-size: 32px; border-color: white; }
+
+.center-area { text-align: center; font-size: 20px; font-weight: bold; color: #e74c3c; margin: 2px 0; }
+
+/* アクションボタン（合体・加護） */
+.action-row { display: flex; justify-content: center; align-items: center; gap: 5px; margin-bottom: 5px; }
+.action-btn { background-color: #8e44ad; width: auto; padding: 6px 10px; font-size: 12px; margin: 0; }
+.action-btn.active { background-color: #f1c40f; color: black; box-shadow: 0 0 10px #f1c40f; }
+.blessing-buttons { display: flex; gap: 3px; }
+.blessing-btn-in-game { background-color: #2c3e50; color: white; border: 1px solid rgba(255,255,255,0.3); padding: 5px 8px; font-size: 11px; border-radius: 5px; width: auto; }
+.blessing-btn-in-game.selected { background-color: #f1c40f; color: black; border-color: #f1c40f; }
+
+/* ★手札：横スクロール対応V2 */
+.hand-scroller { width: 100%; overflow-x: auto; /* 横スクロールを許可 */ padding: 5px 0 10px 0; -webkit-overflow-scrolling: touch; /* iOS用スムーズスクロール */ margin-top: 5px; border-top: 1px solid rgba(255,255,255,0.1); }
+/* スクロールバーのデザイン（非表示にするか、薄くする） */
+.hand-scroller::-webkit-scrollbar { height: 5px; }
+.hand-scroller::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 5px; }
+
+.hand-container-horizontal { display: flex; /* 横並び */ gap: 8px; padding: 0 10px; width: max-content; /* 中身の幅に合わせる */ }
+
+/* 手札のカード */
+.hand-card { width: 55px; height: 75px; background-color: white; color: #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; /* 潰れないようにする */ position: relative; /* 枚数表示のため */ transition: transform 0.1s, box-shadow 0.1s; box-shadow: 0 3px 6px rgba(0,0,0,0.3); }
+.hand-card:active { transform: scale(0.95); }
+.hand-card.disabled { opacity: 0.3 !important; pointer-events: none; background-color: #95a5a6; }
+.hand-card.selected { border-color: #f1c40f; box-shadow: 0 0 10px #f1c40f; }
+
+/* ★枚数表示（右下） */
+.card-count { position: absolute; bottom: 2px; right: 4px; font-size: 11px; color: #7f8c8d; font-weight: normal; background: rgba(255,255,255,0.8); padding: 0 3px; border-radius: 3px; }
+
+/* リザルト */
+#result-screen h1 { margin-top: 0; }
+#back-lobby-btn { width: auto; padding: 12px 24px; }
