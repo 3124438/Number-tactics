@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Number Jump - 完全版V3</title>
+  <title>Number Jump - 完全版V4</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -45,6 +45,11 @@
       <input type="text" id="target-id-input" placeholder="例: 123-456-789" inputmode="numeric">
       <button id="match-btn">対戦を申し込む</button>
       <p id="status-message"></p>
+      
+      <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #ccc; text-align: center;">
+        <p style="font-size: 13px; color: #7f8c8d; margin-bottom: 5px;">あなたのID (相手に教えてあげよう)</p>
+        <p id="my-id-display-bottom" class="id-text" style="font-size: 24px; margin: 0;">---</p>
+      </div>
     </div>
   </div>
 
@@ -87,6 +92,15 @@
     <h1 id="result-title" style="font-size: 40px;"></h1>
     <p id="result-point-info" style="font-size: 20px; font-weight: bold;"></p>
     <button id="back-lobby-btn" style="margin-top: 30px; background-color: #34495e;">ロビーに戻る</button>
+  </div>
+
+  <div id="turn-result-overlay" class="turn-result-overlay" style="display: none;">
+    <div class="turn-result-content">
+      <h3 id="turn-result-msg"></h3>
+      <p style="font-size: 16px; margin: 10px 0;">相手の数字: <span id="turn-opp-card" class="highlight-text" style="color: #ecf0f1;"></span></p>
+      <p style="font-size: 16px; margin: 10px 0;">相手の加護: <span id="turn-opp-blessing" class="highlight-text" style="color: #f1c40f;"></span></p>
+      <p style="font-size: 12px; margin-top: 25px; color: #bdc3c7; animation: blink 1.5s infinite;">画面をタップして次へ</p>
+    </div>
   </div>
 
   <script type="module" src="app.js"></script>
