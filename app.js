@@ -1,13 +1,18 @@
 import { db } from "./firebase-config.js";
 import { doc, setDoc, getDoc, updateDoc, onSnapshot, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// --- データ定義 ---
+// --- ★データ定義（説明文を追加） ---
 const BLESSINGS = {
-  0: { name: "巨人の剛腕(+4)", max: 1 }, 1: { name: "あべこべの世界", max: 5 },
-  2: { name: "混沌の儀式", max: 3 }, 3: { name: "再生の祈り", max: 2 },
-  4: { name: "全反射", max: 1 }, 5: { name: "不屈の魂(初期HP+2)", max: 1 },
-  6: { name: "審判の雷", max: 1 }, 7: { name: "復讐の誓い", max: 1 },
-  8: { name: "聖なる盾", max: 1 }, 9: { name: "重力の呪縛(-4)", max: 1 }
+  0: { name: "巨人の剛腕(+4)", max: 1, desc: "このターンの自分の数字を +4 する。" }, 
+  1: { name: "あべこべの世界", max: 5, desc: "このターンのみ、「数字が小さい方」が勝利する。" },
+  2: { name: "混沌の儀式", max: 3, desc: "手札を減らさず、0〜9のランダムな数字を出す。" }, 
+  3: { name: "再生の祈り", max: 2, desc: "自分のライフを 1回復 する。" },
+  4: { name: "全反射", max: 1, desc: "敗北時、ライフの減少を相手に変更する。" }, 
+  5: { name: "不屈の魂(初期HP+2)", max: 1, desc: "試合開始時に 最大ライフ+2（計5）。" },
+  6: { name: "審判の雷", max: 1, desc: "勝利時、相手へのダメージを 2 にする。" }, 
+  7: { name: "復讐の誓い", max: 1, desc: "（相手L - 自分L）× 2 を自分の数字に加算。" },
+  8: { name: "聖なる盾", max: 1, desc: "敗北してもライフが減らない。" }, 
+  9: { name: "重力の呪縛(-4)", max: 1, desc: "相手が出したカードの数字を -4 する。" }
 };
 
 const DECK_LIMITS = { 0: 1, 1: 16, 2: 8, 3: 5, 4: 4, 5: 3, 6: 2, 7: 2, 8: 2, 9: 1 };
@@ -25,12 +30,8 @@ const ui = {
   myHP: document.getElementById("my-hp"), oppHP: document.getElementById("opponent-hp"), myField: document.getElementById("my-field"), oppField: document.getElementById("opponent-field"),
   gameMsg: document.getElementById("game-message"), hand: document.getElementById("my-hand"), unionBtn: document.getElementById("union-btn"), activeBlessings: document.getElementById("active-blessings"),
   resTitle: document.getElementById("result-title"), resPoint: document.getElementById("result-point-info"), backBtn: document.getElementById("back-lobby-btn"),
-  
-  // ★ポップアップ用DOM
-  turnResultOverlay: document.getElementById("turn-result-overlay"),
-  turnResultMsg: document.getElementById("turn-result-msg"),
-  turnOppCard: document.getElementById("turn-opp-card"),
-  turnOppBlessing: document.getElementById("turn-opp-blessing"),
+  turnResultOverlay: document.getElementById("turn-result-overlay"), turnResultMsg: document.getElementById("turn-result-msg"),
+  turnOppCard: document.getElementById("turn-opp-card"), turnOppBlessing: document.getElementById("turn-opp-blessing"),
 };
 
 // --- グローバル状態 ---
@@ -119,15 +120,33 @@ function renderDeckEditor() {
   }
 }
 
+// ★加護の表示に説明文（desc）を追加
 function renderBlessingSetup() {
   ui.blessings.innerHTML = "";
   Object.keys(BLESSINGS).forEach(id => {
     const label = document.createElement("label");
-    const cb = document.createElement("input"); cb.type = "checkbox"; cb.value = id; cb.className = "blessing-cb";
+    
+    const cb = document.createElement("input"); 
+    cb.type = "checkbox"; cb.value = id; cb.className = "blessing-cb";
     cb.onchange = () => { if(screens.lobby.querySelectorAll('.blessing-cb:checked').length > 3) cb.checked = false; };
+    
+    const textContainer = document.createElement("div");
+    textContainer.className = "blessing-text-container";
+
+    const titleSpan = document.createElement("div"); 
+    titleSpan.className = "blessing-info-title"; 
+    titleSpan.textContent = BLESSINGS[id].name;
+
+    const descSpan = document.createElement("div");
+    descSpan.className = "blessing-info-desc";
+    descSpan.textContent = BLESSINGS[id].desc;
+
+    textContainer.appendChild(titleSpan);
+    textContainer.appendChild(descSpan);
+
     label.appendChild(cb);
-    const span = document.createElement("span"); span.className = "blessing-info-text"; span.textContent = ` ${BLESSINGS[id].name}`;
-    label.appendChild(span); ui.blessings.appendChild(label);
+    label.appendChild(textContainer);
+    ui.blessings.appendChild(label);
   });
 }
 
@@ -320,14 +339,14 @@ const startGame = async (targetID) => {
 };
 
 // ----------------------------------
-// ★勝敗判定とポップアップ表示（タップ進行へ変更）
+// 勝敗判定とポップアップ表示
 // ----------------------------------
 const resolveTurn演出 = (data) => {
   const me = state.uid; const opp = state.targetUID;
   const roomRef = doc(db, "rooms", state.roomID);
 
   const myB = data[`${me}_blessing`]; const oppB = data[`${opp}_blessing`];
-  const oppRawVal = data[`${opp}_card1`] + (data[`${opp}_card2`] || 0); // 相手の素の数字
+  const oppRawVal = data[`${opp}_card1`] + (data[`${opp}_card2`] || 0); 
 
   let myVal = data[`${me}_card1`] + (data[`${me}_card2`] || 0);
   let oppVal = oppRawVal;
@@ -338,7 +357,7 @@ const resolveTurn演出 = (data) => {
   if(oppB === 7) oppVal += Math.max(0, (data[`${me}_hp`] - data[`${opp}_hp`]) * 2);
 
   const isReverse = (myB === 1 || oppB === 1);
-  let result = 0; // 0:draw, 1:myWin, 2:oppWin
+  let result = 0; 
   
   if (myVal === oppVal) {
     result = 0;
@@ -362,7 +381,6 @@ const resolveTurn演出 = (data) => {
   let nextMyHP = data[`${me}_hp`] - myDmg + (myB === 3 ? 1 : 0);
   let nextOppHP = data[`${opp}_hp`] - oppDmg + (oppB === 3 ? 1 : 0);
 
-  // 盤面の演出表示
   ui.myField.textContent = myVal; ui.myField.classList.add("open"); ui.myField.style.background = "white";
   ui.oppField.textContent = oppVal; ui.oppField.classList.add("open"); ui.oppField.style.background = "white";
   document.getElementById("opp-blessing-msg").textContent = oppB !== null ? `相手:${BLESSINGS[oppB].name.split('(')[0]}` : "";
@@ -374,29 +392,22 @@ const resolveTurn演出 = (data) => {
   
   ui.gameMsg.textContent = msg; ui.gameMsg.style.color = color;
 
-  // ★ポップアップ（オーバーレイ）のテキスト準備
   ui.turnResultMsg.textContent = msg;
   ui.turnResultMsg.style.color = color;
   
-  // 相手の数字（加護による補正があった場合は元の数字も表示する）
   let oppValText = `${oppRawVal}`;
   if (oppRawVal !== oppVal) oppValText += ` (補正後: ${oppVal})`;
   ui.turnOppCard.textContent = oppValText;
-  
-  // 相手の加護
-  ui.turnOppBlessing.textContent = oppB !== null ? BLESSINGS[oppB].name : "使用なし";
+  ui.turnOppBlessing.textContent = oppB !== null ? BLESSINGS[oppB].name.split('(')[0] : "使用なし"; // 加護の名前だけきれいに表示
 
-  // 少し待ってからポップアップを表示（盤面を見る時間を作る）
   setTimeout(() => {
     ui.turnResultOverlay.style.display = "flex";
   }, 800);
 
-  // ★ポップアップをタップした時の処理（次へ進む）
   ui.turnResultOverlay.onclick = async () => {
     ui.turnResultOverlay.style.display = "none";
-    ui.turnResultOverlay.onclick = null; // リセット
+    ui.turnResultOverlay.onclick = null; 
 
-    // ホスト側はタップしたタイミングでDBを更新
     if(state.isHost) {
       if(nextMyHP <= 0 || nextOppHP <= 0) {
         await updateDoc(roomRef, { [`${me}_hp`]: nextMyHP, [`${opp}_hp`]: nextOppHP, gameOver: true });
@@ -409,12 +420,10 @@ const resolveTurn演出 = (data) => {
       }
     }
 
-    // 決着がついたか、次のターンへ進むかの振り分け
     if(nextMyHP <= 0 || nextOppHP <= 0) {
       if(listeners.room) listeners.room();
       showResult(nextMyHP > nextOppHP);
     } else {
-      // 自分のローカルUIをリセットして次のターンへ
       ui.myField.textContent = "選ぶ"; ui.myField.style.background = "#ecf0f1"; ui.myField.classList.remove("open");
       ui.oppField.textContent = "考え中"; ui.oppField.style.background = "#ecf0f1"; ui.oppField.classList.remove("open");
       document.getElementById("opp-blessing-msg").textContent = "";
