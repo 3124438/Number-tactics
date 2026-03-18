@@ -1,4 +1,4 @@
-/* style.css */
+/* ロビー画面のデザイン */
 body {
   font-family: sans-serif;
   background-color: #f4f4f9;
@@ -7,12 +7,10 @@ body {
   margin: 0;
   padding: 20px;
 }
-
 .container {
   max-width: 400px;
   margin: 0 auto;
 }
-
 .card {
   background: white;
   padding: 20px;
@@ -20,7 +18,6 @@ body {
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   margin-bottom: 20px;
 }
-
 .id-text {
   font-size: 32px;
   font-weight: bold;
@@ -28,7 +25,6 @@ body {
   color: #2c3e50;
   margin: 10px 0;
 }
-
 input {
   width: 80%;
   padding: 10px;
@@ -38,7 +34,6 @@ input {
   border: 2px solid #ddd;
   border-radius: 5px;
 }
-
 button {
   background-color: #e74c3c;
   color: white;
@@ -49,17 +44,15 @@ button {
   cursor: pointer;
   font-weight: bold;
 }
-
 button:hover {
   background-color: #c0392b;
 }
-
 #status-message {
   font-weight: bold;
   color: #7f8c8d;
 }
-/* style.css の一番下に追加 */
 
+/* ゲーム画面のデザイン */
 .game-container {
   max-width: 500px;
   margin: 0 auto;
@@ -67,25 +60,22 @@ button:hover {
   color: white;
   border-radius: 10px;
   padding: 20px;
-  height: 90vh;
+  height: 80vh;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
-
 .player-area {
   background-color: rgba(255,255,255,0.1);
   padding: 15px;
   border-radius: 8px;
   text-align: center;
 }
-
 .status {
   font-size: 18px;
   font-weight: bold;
   margin-bottom: 10px;
 }
-
 .field-card {
   width: 80px;
   height: 110px;
@@ -100,14 +90,12 @@ button:hover {
   font-weight: bold;
   box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
-
 .center-area {
   text-align: center;
   font-size: 24px;
   font-weight: bold;
   color: #e74c3c;
 }
-
 .hand-container {
   display: flex;
   flex-wrap: wrap;
@@ -115,7 +103,6 @@ button:hover {
   justify-content: center;
   margin-top: 15px;
 }
-
 .hand-card {
   width: 50px;
   height: 70px;
@@ -131,7 +118,6 @@ button:hover {
   border: 2px solid transparent;
   transition: transform 0.1s;
 }
-
 .hand-card:hover {
   transform: translateY(-5px);
   border-color: #e74c3c;
