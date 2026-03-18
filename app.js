@@ -35,7 +35,6 @@ const ui = {
   blessingConfirmOverlay: document.getElementById("blessing-confirm-overlay"), confirmBlessingName: document.getElementById("confirm-blessing-name"),
   confirmBlessingDesc: document.getElementById("confirm-blessing-desc"), confirmBlessingCount: document.getElementById("confirm-blessing-count"),
   useBlessingBtn: document.getElementById("use-blessing-btn"), cancelBlessingBtn: document.getElementById("cancel-blessing-btn"),
-  // ★盾のボーナス表示用
   shieldBonusMsg: document.getElementById("shield-bonus-msg")
 };
 
@@ -179,9 +178,10 @@ ui.matchBtn.addEventListener("click", async () => {
   const targetID = ui.targetInput.value.replace(/[^0-9]/g, "");
   if (targetID.length !== 9 || targetID === state.uid) return alert("自分以外の正しい9桁のIDを入力してください");
 
+  // ★変更点：加護を選んでいなくてもエラーにしない（制限解除）
   const checked = screens.lobby.querySelectorAll('.blessing-cb:checked');
   state.selectedBlessings = Array.from(checked).map(cb => parseInt(cb.value));
-  if(state.selectedBlessings.length === 0) return alert("加護を1つ以上選んでください");
+  
   if (Object.values(state.myDeckConfig).reduce((a, b) => a + b, 0) !== 30) return alert("デッキを30枚に調整してください");
 
   ui.matchBtn.disabled = true; ui.status.textContent = "相手の入力を待っています...";
@@ -354,7 +354,6 @@ const startGame = async (targetID) => {
 
   renderInventoryHand();
 
-  // ★Hostが盾のボーナス状態も初期化してDBを作る
   if(state.isHost) {
     await setDoc(doc(db, "rooms", state.roomID), {
       [`${state.uid}_hp`]: state.myHP, [`${targetID}_hp`]: 3,
@@ -371,7 +370,6 @@ const startGame = async (targetID) => {
     state.myHP = data[`${state.uid}_hp`]; state.oppHP = data[`${state.targetUID}_hp`];
     ui.myHP.textContent = state.myHP; ui.oppHP.textContent = state.oppHP;
     
-    // ★盾のボーナスを画面に表示
     const mySB = data[`${state.uid}_shieldBonus`] || 0;
     ui.shieldBonusMsg.textContent = mySB > 0 ? `🛡️ 聖なる盾効果: 今回の数字に +${mySB}` : "";
     
@@ -395,7 +393,6 @@ const resolveTurn演出 = (data) => {
   const myB = data[`${me}_blessing`]; const oppB = data[`${opp}_blessing`];
   const oppRawVal = data[`${opp}_card1`] + (data[`${opp}_card2`] || 0); 
 
-  // ★盾のボーナスを取得して基礎値に足す
   const mySB = data[`${me}_shieldBonus`] || 0;
   const oppSB = data[`${opp}_shieldBonus`] || 0;
 
@@ -433,7 +430,6 @@ const resolveTurn演出 = (data) => {
   if(result === 1 && myB === 6) oppDmg = 2; if(result === 2 && oppB === 6) myDmg = 2; 
   if(myB === 4 && result === 2) { myDmg = 0; oppDmg = 1; } if(oppB === 4 && result === 1) { oppDmg = 0; myDmg = 1; } 
   
-  // ★聖なる盾(8)の処理：負けた場合、ダメージを0にして次ターンのボーナスを付与
   if(myB === 8 && result === 2) { myDmg = 0; nextMyShieldBonus = 2; }
   if(oppB === 8 && result === 1) { oppDmg = 0; nextOppShieldBonus = 2; }
 
@@ -453,7 +449,6 @@ const resolveTurn演出 = (data) => {
   ui.gameMsg.textContent = msg; ui.gameMsg.style.color = color;
   ui.turnResultMsg.textContent = msg; ui.turnResultMsg.style.color = color;
   
-  // 相手の数字の計算式表示
   let oppValText = `${oppRawVal}`;
   if (oppRawVal !== oppVal) oppValText += ` (補正後: ${oppVal})`;
   ui.turnOppCard.textContent = oppValText;
@@ -463,7 +458,6 @@ const resolveTurn演出 = (data) => {
     ui.turnResultOverlay.style.display = "flex";
   }, 800);
 
-  // ポップアップを閉じた時、次のターンへ
   ui.turnResultOverlay.onclick = async () => {
     ui.turnResultOverlay.style.display = "none";
     ui.turnResultOverlay.onclick = null; 
