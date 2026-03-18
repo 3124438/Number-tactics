@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Number Jump - 完全版V2</title>
+  <title>Number Jump - 完全版V3</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,14 +18,26 @@
     
     <div class="card my-info">
       <h2>あなたのID: <span id="my-id-display" class="id-text">生成中...</span></h2>
-      <p>所持ポイント: <span id="my-points">---</span> pt</p>
-      <p>次戦の賭け金: <span id="bet-points">---</span> pt (5%)</p>
+      <p style="font-size: 16px; font-weight: bold; margin: 8px 0;">🏆 あなたの順位: <span id="my-rank" class="highlight-text">-</span> 位</p>
+      <p style="margin: 8px 0;">所持ポイント: <span id="my-points" class="highlight-text">---</span> pt</p>
+      
+      <div class="bet-section">
+        <p style="margin: 0 0 8px 0;">次戦の掛け金: <span id="bet-points" class="highlight-text" style="color:#e74c3c;">---</span> pt (<span id="bet-percent-display">5%</span>)</p>
+        <div class="slider-container">
+          <span style="font-size: 12px; font-weight: bold;">5%</span>
+          <input type="range" id="bet-slider" min="5" max="100" step="5" value="5">
+          <span style="font-size: 12px; font-weight: bold;">100%</span>
+        </div>
+      </div>
     </div>
 
     <div class="card setup-info">
-      <h2>⚔️ 加護の選択 (3つまで)</h2>
+      <h2>⚔️ 準備</h2>
+      <p class="section-subtitle">① 加護の選択 (3つまで)</p>
       <div id="blessing-container" class="blessing-list-vertical"></div>
-      <p style="font-size: 12px; color: #7f8c8d; margin-top: 10px;">デッキは初期仕様に基づき10種30枚がセットされます。</p>
+      
+      <p class="section-subtitle" style="margin-top: 15px;">② デッキ編成 (合計 <span id="deck-total" class="highlight-text">30</span>/30枚)</p>
+      <div class="deck-editor" id="deck-grid"></div>
     </div>
 
     <div class="card match-info">
@@ -73,7 +85,7 @@
 
   <div id="result-screen" class="container" style="display: none; padding-top: 50px;">
     <h1 id="result-title" style="font-size: 40px;"></h1>
-    <p id="result-point-info" style="font-size: 20px;"></p>
+    <p id="result-point-info" style="font-size: 20px; font-weight: bold;"></p>
     <button id="back-lobby-btn" style="margin-top: 30px; background-color: #34495e;">ロビーに戻る</button>
   </div>
 
